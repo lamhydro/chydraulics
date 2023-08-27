@@ -1,0 +1,4 @@
+# Ignoring dirs
+/chydraulics/__pycache__
+
+# Ignoring files
