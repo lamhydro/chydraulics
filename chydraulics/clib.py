@@ -162,13 +162,33 @@ def Somanning(alpha, Q, n, b, theta1, theta2, y):
     theta2 = Left diagonal angle with the horizontal in degrees
     y = water depth
   """
-  A = area(b, theta1, theta2, y)
-  P = perimeter(b, theta1, theta2, y)
-  Rh = A/P
   try:
+    A = area(b, theta1, theta2, y)
+    P = perimeter(b, theta1, theta2, y)
+    Rh = A/P
     return ((Q*n)/(alpha*A*(Rh**(2.0/3.0))))**2.
   except ValueError:
     print("Oops!  That was no valid number.  Try again...")
+
+def SomanningI(alpha, Q, ns, xs, ys):  
+  """
+  Estimating channel slope for an irregular cross section using Manning equation
+  Where:
+    alpha = Unit convertion factor    
+    Q  = Discharge  
+    ns = List of Manning roughness coefficients
+    xs = List of x coords
+    ys = List of y coords
+  """
+  try:
+    At,Al = irregCrossSecA(xs, ys)
+    Pt,Pl = irregCrossSecP(xs, ys)
+    na = weightedAve(Al, ns)
+    Rh = At/Pt
+    return ((Q*na)/(alpha*At*(Rh**(2.0/3.0))))**2.
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
 
 def SomanningC(alpha, Q, n, theta, r):  
   """
@@ -180,10 +200,10 @@ def SomanningC(alpha, Q, n, theta, r):
     theta = Angle formed between the vertical axe and the radio to y in degrees
     r = Radius of cross section
   """
-  A = areaC(theta, r)
-  P = perimeterC(theta, r)
-  Rh = A/P
   try:
+    A = areaC(theta, r)
+    P = perimeterC(theta, r)
+    Rh = A/P
     return ((Q*n)/(alpha*A*(Rh**(2.0/3.0))))**2.
   except ValueError:
     print("Oops!  That was no valid number.  Try again...")
@@ -200,11 +220,29 @@ def Nmanning(alpha, Q, So, b, theta1, theta2, y):
     theta2 = Left diagonal angle with the horizontal in degrees
     y = water depth
   """
-  A = area(b, theta1, theta2, y)
-  P = perimeter(b, theta1, theta2, y)
-  Rh = A/P
   try:
+    A = area(b, theta1, theta2, y)
+    P = perimeter(b, theta1, theta2, y)
+    Rh = A/P
     return (alpha/Q)*A*(Rh**(2.0/3.0))*(So**0.5)
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def NmanningI(alpha, Q, So, xs, ys):  
+  """
+  Estimating Manning roughness factor for an irregular cross section using Manning equation
+  Where:
+    alpha = Unit convertion factor    
+    Q  = Discharge  
+    So = Channel slope
+    xs = List of x coords
+    ys = List of y coords
+  """
+  try:
+    At,Al = irregCrossSecA(xs, ys)
+    Pt,Pl = irregCrossSecP(xs, ys)
+    Rh = At/Pt
+    return (alpha/Q)*At*(Rh**(2.0/3.0))*(So**0.5)
   except ValueError:
     print("Oops!  That was no valid number.  Try again...")
 
@@ -239,31 +277,6 @@ def thetaInC(r, y):
     return (180.0/math.pi)*math.acos((r-y)/r)
   elif y > r:
     return (180.0/math.pi)*math.asin((y-r)/r)
-
-#def triangleArea(b, h):
-#  """
-#  Estimating Manning roughness factor for a circular channel using Manning equation
-#  Where:
-#    b = Triangle base
-#    h = Triangle height
-#  """
-#  try:
-#    return b*h*0.5
-#  except ValueError:
-#    print("Oops!  That was no valid number.  Try again...")
-#
-#def trapezoidArea(b1, b2, h):
-#  """
-#  Estimating Manning roughness factor for a circular channel using Manning equation
-#  Where:
-#    b1 = Trapezoid base 1
-#    b2 = Trapezoid base 2
-#    h =  Trapezoid height
-#  """
-#  try:
-#    return (b1+b2)*h*0.5
-#  except ValueError:
-#    print("Oops!  That was no valid number.  Try again...")
 
 def linearInterp(x1, y1, x2, y2, y):
   """
@@ -394,6 +407,25 @@ def irregCrossSecP(xs, ys):
   except ValueError:
     print("Oops!  That was no valid number.  Try again...")
 
+
+def weightedAve(wl, xl):
+  """
+  Estimation of weighted average
+  Where:
+    wl = List of weights 
+    xl = List of values to be averaged
+  """
+
+  try:
+    n = len(xl)
+    xa = 0.
+    for i in range(n):
+      xa += wl[i]*xl[i]
+    return xa/sum(wl)
+
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
 def QmanningI(alpha, So, ns, xs, ys):
   """
   Estimation of discharge for an irregular cross section
@@ -403,17 +435,13 @@ def QmanningI(alpha, So, ns, xs, ys):
     So = Channel slope  
     xs = List of x coords
     ys = List of y coords
-    """
+  """
   try:
     At,Al = irregCrossSecA(xs, ys)
     Pt,Pl = irregCrossSecP(xs, ys)
-    n = len(Al)
-    nt = 0.
-    for i in range(n):
-      nt += ns[i]*Al[i]
-    nt = nt/At
+    na = weightedAve(Al, ns)
     Rh = At/Pt
-    return At*(alpha/nt)*(Rh**(2./3.))*(So**0.5)
+    return At*(alpha/na)*(Rh**(2./3.))*(So**0.5)
     #print(Al, At)
     #print(Pl, Pt)
     #cte = alpha*(So**0.5)

@@ -27,9 +27,8 @@ class UniformFlowI():
     self._setConFac()
 
     # Set type of problem and solve it
-    #self._problemType()
+    self._problemType()
 
-    self._getNormalDepth()
 
   def _setGravity(self):
     """
@@ -43,29 +42,27 @@ class UniformFlowI():
     """
     self._conf = clib.convertionFactor(self._data['US'])
 
-#  def _getYmax(self):
-#    """
-#    Get the maximun y coord.
-#    """
-#    self._ymax = max(self._data['ys'])
-#
-#  def _getYmin(self):
-#    """
-#    Get the minimun y coord.
-#    """
-#    self._ymin = min(self._data['ys'])
-#
-#  def _getXmax(self):
-#    """
-#    Get the maximun X coord.
-#    """
-#    self._xmax = max(self._data['xs'])
-#
-#  def _getXmin(self):
-#    """
-#    Get the minimun x coord.
-#    """
-#    self._xmin = min(self._data['xs'])
+  def _problemType(self):
+    if self._data['y'] == "":
+      print('')
+      print('Find the normal depth (y_n)')
+      print('')
+      self._getNormalDepth()
+    if self._data['Q'] == "":
+      print('')
+      print('Find the normal discharge (Q)')
+      print('')
+      self._getNormalDisch()  
+    if self._data['So'] == "":
+      print('')
+      print('Find the channel slope (So)')
+      print('')
+      self._getChSlope()  
+    if self._data['ns'] == []:
+      print('')
+      print('Find Manning roughness factor (n)')
+      print('')
+      self._getNmanning()  
 
 
   def _getNormalDepth(self):
@@ -105,78 +102,72 @@ class UniformFlowI():
       print('Normal depth (y_n) = %8.3f ft' % c) 
 
 
-#  def _problemType(self):
-#    if self._data['y'] == "":
-#      print('')
-#      print('Find the normal depth (y_n)')
-#      print('')
-#      self._getNormalDepth()
-#    if self._data['Q'] == "":
-#      print('')
-#      print('Find the normal discharge (Q)')
-#      print('')
-#      self._getNormalDisch()  
-#    if self._data['So'] == "":
-#      print('')
-#      print('Find the channel slope (So)')
-#      print('')
-#      self._getChSlope()  
-#    if self._data['n'] == "":
-#      print('')
-#      print('Find Manning roughness factor (n)')
-#      print('')
-#      self._getNmanning()  
-#
-#  def _getNormalDisch(self):
-#    """
-#    Estimate the normal discharge
-#    """
-#    if self._data['ST'] == 1:
-#      theta = clib.thetaInC(self._data['r'], self._data['y'])
-#      self._data['Q'] = clib.QmanningC(self._conf, self._data['So'], self._data['n'], theta, self._data['r'])   
-#    elif self._data['ST'] == 2:
-#      self._data['Q'] = clib.Qmanning(self._conf, self._data['So'], self._data['n'], self._data['b'], self._data['theta1'], self._data['theta2'], self._data['y'])   
-#
-#    # Printing results
-#    if self._data['US'] == 'IS':
-#      print('Normal discharge (Q) = %8.3f m³/s' % self._data['Q']) 
-#    elif self._data['US'] == 'BG':
-#      print('Normal discharge (Q) = %f8.3f ft³/s' % self._data['Q']) 
-#
-#
-#  def _getChSlope(self):
-#    """
-#    Estimate the channel slope
-#    """
-#    if self._data['ST'] == 1:
-#      theta = clib.thetaInC(self._data['r'], self._data['y'])
-#      self._data['So'] = clib.SomanningC(self._conf, self._data['Q'], self._data['n'], theta, self._data['r'])   
-#    elif self._data['ST'] == 2:
-#      self._data['So'] = clib.Somanning(self._conf, self._data['Q'], self._data['n'], self._data['b'], self._data['theta1'], self._data['theta2'], self._data['y'])   
-#
-#    # Printing results
-#    if self._data['US'] == 'IS':
-#      print('Channel slope (So) = %8.5f m/m' % self._data['So']) 
-#    elif self._data['US'] == 'BG':
-#      print('Channel slope (So) = %8.5f ft/ft' % self._data['So']) 
-#
-#
-#  def _getNmanning(self):
-#    """
-#    Estimate the Manning roughness coefficient
-#    """
-#    if self._data['ST'] == 1:
-#      theta = clib.thetaInC(self._data['r'], self._data['y'])
-#      self._data['n'] = clib.NmanningC(self._conf, self._data['Q'], self._data['So'], theta, self._data['r'])   
-#    elif self._data['ST'] == 2:
-#      self._data['n'] = clib.Nmanning(self._conf, self._data['Q'], self._data['So'], self._data['b'], self._data['theta1'], self._data['theta2'], self._data['y'])   
-#
-#    # Printing results
-#    if self._data['US'] == 'IS':
-#      print('Manning roughness (n) = %8.5f' % self._data['n']) 
-#    elif self._data['US'] == 'BG':
-#      print('Manning roughness (n) = %8.5f' % self._data['n']) 
+  def _getNormalDisch(self):
+    """
+    Estimate the normal discharge
+    """
+    xsn, ysn, nsn = clib.interpAnewSection(self._data['xs'], self._data['ys'], self._data['ns'], self._data['y'])
+    self._data['Q'] = clib.QmanningI(self._conf, self._data['So'], nsn, xsn, ysn)   
+
+    # Printing results
+    if self._data['US'] == 'IS':
+      print('Normal discharge (Q) = %8.3f m³/s' % self._data['Q']) 
+    elif self._data['US'] == 'BG':
+      print('Normal discharge (Q) = %f8.3f ft³/s' % self._data['Q']) 
 
 
+  def _getChSlope(self):
+    """
+    Estimate the channel slope
+    """
+    xsn, ysn, nsn = clib.interpAnewSection(self._data['xs'], self._data['ys'], self._data['ns'], self._data['y'])
+    self._data['So'] = clib.SomanningI(self._conf, self._data['Q'], nsn, xsn, ysn)   
+
+    # Printing results
+    if self._data['US'] == 'IS':
+      print('Channel slope (So) = %8.5f m/m' % self._data['So']) 
+    elif self._data['US'] == 'BG':
+      print('Channel slope (So) = %8.5f ft/ft' % self._data['So']) 
+
+
+  def _getNmanning(self):
+    """
+    Estimate the Manning roughness coefficient
+    """
+    self._data['ns'] = [0]*(len(self._data['ys'])-1)
+    xsn, ysn, nsn = clib.interpAnewSection(self._data['xs'], self._data['ys'], self._data['ns'], self._data['y'])
+    self._data['ns']= clib.NmanningI(self._conf, self._data['Q'], self._data['So'], xsn, ysn)  
+
+    # Printing results
+    if self._data['US'] == 'IS':
+      print('Manning roughness (n) = %8.5f' % self._data['ns']) 
+    elif self._data['US'] == 'BG':
+      print('Manning roughness (n) = %8.5f' % self._data['ns']) 
+
+
+
+#  def _getYmax(self):
+#    """
+#    Get the maximun y coord.
+#    """
+#    self._ymax = max(self._data['ys'])
+#
+#  def _getYmin(self):
+#    """
+#    Get the minimun y coord.
+#    """
+#    self._ymin = min(self._data['ys'])
+#
+#  def _getXmax(self):
+#    """
+#    Get the maximun X coord.
+#    """
+#    self._xmax = max(self._data['xs'])
+#
+#  def _getXmin(self):
+#    """
+#    Get the minimun x coord.
+#    """
+#    self._xmin = min(self._data['xs'])
 
 

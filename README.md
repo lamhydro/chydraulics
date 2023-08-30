@@ -5,7 +5,7 @@ This is a repository to solve multiple problems related to open channel hydrauli
 
 
 ## Uniform Flow
-Assuming uniform flow in a circular o no circular (rectangular, triangular and trapezoidal) channel, the Manning equation is used to calculate:
+Assuming uniform flow in a circular, no circular (rectangular, triangular and trapezoidal) or irregular (e.g. river) channel, the **Manning equation** is used to calculate:
 
 1. Normal water depth
 
@@ -19,19 +19,21 @@ Assuming uniform flow in a circular o no circular (rectangular, triangular and t
 
 #### `chydraulics`
 
-This directory contain:
+This directory contains:
 
 - `clib.py`: This is a python library with functions to calculate multiple variables related to open channel flow.
 
-- `ufclass.py`: This is a python library with the `UniformClass` to solve problems related to **uniform flow** in channels. Here the class `UniformFlow` call functions from `clib.py`. 
+- `ufclass.py`: This is a python library with the `UniformClass` to solve problems related to **uniform flow** in regular (e.g. circular, trapezoidal, etc) channels. Here the class `UniformFlow` call functions from `clib.py`. 
 
-#### `test_uf`
+- `uficlass.py`: This is a python library with the `UniformClassI` to solve problems related to **uniform flow** in irregular (e.g. rivers) channels. Here the class `UniformFlowI` call functions from `clib.py`. 
 
-This directory contain the following:
+#### `test_uf` y `test_ufi`
 
-- `main.py`: This is the python script that call the class `UniformFlow` in `/chydraulics/ufclass.py` which solves the problem.
+These directories contain the following:
 
-- `.json` : *JSON* is a friendly format to introduce information to scripts. Note that are multiple files with the  extension `.json`, these files contain information for unform flow problems. All the `.json` contain the same structure and information, so that, the scripts are able to indentify which of the four problems need to be solve. The structure of `.json` files is:
+- `main.py`: This is the python script that call the class `UniformFlow` or `UniformFlowI` in `/chydraulics/ufclass.py` or  `/chydraulics/uficlass.py` which solves the problem.
+
+- `.json` (regular channels): *JSON* is a friendly format to introduce information to scripts. Note that are multiple files with the  extension `.json`, these files contain information for unform flow problems. All the `.json` contain the same structure and information, so that, the scripts are able to indentify which of the four problems need to be solve. The structure of `.json` files is:
 
    `"ST"`:
     Section type. It can be egual to `1` (Circular cross section) or  `2` (Non circular cross section). [*mandatory*]
@@ -62,6 +64,30 @@ This directory contain the following:
 
    `"r"`:
     Radius of a circular channel. It is given in  `"IS"` or `"BG"`. It is `"r":""` for non circular channels.
+
+
+- `.json` (iregular channels)
+
+   `"US"`:
+    Unit measure system. It can be egual to `"IS"` (International system) or  `"BG"` (English system). [*mandatory*]
+
+   `"Q"`:
+    Flow discharge. It is given in  `"IS"` or `"BG"`. It is not given for **problem 2**.
+
+   `"So"`:
+    Channel slope. It is not given for **problem 3**.
+
+   `"xs"`:
+   List of `x` coordinates of the `n` points that shape the cross section.
+
+   `"ys"`:
+   List of `y` coordinates of the `n` points that shape the cross section.
+
+   `"ns"`:
+   List of Manning roughness coefficients for `n-1` segments (between two point) in the cross section. It is not given for **problem 4**, empty list.
+
+   `"y"`:
+   Normal water depth. It is given in  `"IS"` or `"BG"`. It is not given for **problem 1**.
 
 ### How to execute it
 1. Clone the repo as
