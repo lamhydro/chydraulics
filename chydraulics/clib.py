@@ -426,6 +426,46 @@ def weightedAve(wl, xl):
   except ValueError:
     print("Oops!  That was no valid number.  Try again...")
 
+def equiNmanning_EinsteinHorton(Ps, ns):
+  """
+  Estimation of equivalent Manning n, using the Einstein-Horton equation.
+  Input:
+  - Ps: List of perimeters for each segment
+  - ns: List of Mannign n for each segment
+  Output:
+  - Equivalent Manning n
+  """
+  try:
+    n = len(Ps)
+    psns = 0.
+    for i in range(n):
+      psns += Ps[i]*((ns[i])**(3./2))
+    return (psns/sum(Ps))**(2./3)
+
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def equiNmanning_EinsteinHorton(Ps, ns):
+  """
+  Estimation of equivalent Manning n, using the Einstein-Horton equation.
+  Input:
+  - Ps: List of perimeters for each segment
+  - ns: List of Mannign n for each segment
+  Output:
+  - Equivalent Manning n
+  """
+  try:
+    n = len(Ps)
+    psns = 0.
+    for i in range(n):
+      psns += Ps[i]*((ns[i])**(3./2))
+    return (psns/sum(Ps))**(2./3)
+
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+
+
 def QmanningI(alpha, So, ns, xs, ys):
   """
   Estimation of discharge for an irregular cross section
@@ -439,7 +479,8 @@ def QmanningI(alpha, So, ns, xs, ys):
   try:
     At,Al = irregCrossSecA(xs, ys)
     Pt,Pl = irregCrossSecP(xs, ys)
-    na = weightedAve(Al, ns)
+    #na = weightedAve(Al, ns)
+    na = equiNmanning_EinsteinHorton(Pl,ns)
     Rh = At/Pt
     return At*(alpha/na)*(Rh**(2./3.))*(So**0.5)
     #print(Al, At)

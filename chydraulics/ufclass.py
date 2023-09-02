@@ -163,6 +163,7 @@ class UniformFlow():
     i = 1
     while i<= clib.NMAX:
       c = (self._a + self._b)/2.0
+      print(c)
 
       if self._data['ST'] == 1:
         fa = self._data['Q'] - clib.QmanningC(self._conf, self._data['So'], self._data['n'], self._a, self._data['r'])   
