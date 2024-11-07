@@ -15,6 +15,8 @@ TI = 0.01
 TF = 179.9
 
 import math
+import matplotlib.pyplot as plt
+import numpy as np
 
 def gravity(US):
   """
@@ -49,8 +51,8 @@ def area(b, theta1, theta2, y):
   Area of the cross section of a rectagular, triangular o trapezoidal channel.
   Where:
     b = Channel width
-    theta1 = Right diagonal angle with the horizontal in degrees
-    theta2 = Left diagonal angle with the horizontal in degrees
+    theta1 = Right diagonal angle with the horizontal in radians 
+    theta2 = Left diagonal angle with the horizontal in radians 
     y = water depth
   """
   try:
@@ -63,8 +65,8 @@ def perimeter(b, theta1, theta2, y):
   Perimeter of the cross section of a rectagular, triangular o trapezoidal channel.
   Where:
     b = Channel width
-    theta1 = Right diagonal angle with the horizontal in degrees
-    theta2 = Left diagonal angle with the horizontal in degrees
+    theta1 = Right diagonal angle with the horizontal in radians
+    theta2 = Left diagonal angle with the horizontal in radians
     y = water depth
   """
   try:
@@ -77,8 +79,8 @@ def hydraulicRatio(b, theta1, theta2, y):
   Hydraulic ratio of the cross section of a rectagular, triangular o trapezoidal channel.
   Where:
     b = Channel width
-    theta1 = Right diagonal angle with the horizontal in degrees
-    theta2 = Left diagonal angle with the horizontal in degrees
+    theta1 = Right diagonal angle with the horizontal in radians
+    theta2 = Left diagonal angle with the horizontal in radians 
     y = water depth
   """
   try:
@@ -120,8 +122,8 @@ def Qmanning(alpha, So, n, b, theta1, theta2, y):
     So = Channel slope  
     n = Manning roughness factor
     b = Channel width
-    theta1 = Right diagonal angle with the horizontal in degrees
-    theta2 = Left diagonal angle with the horizontal in degrees
+    theta1 = Right diagonal angle with the horizontal in radians
+    theta2 = Left diagonal angle with the horizontal in radians
     y = water depth
   """
   A = area(b, theta1, theta2, y)
@@ -158,8 +160,8 @@ def Somanning(alpha, Q, n, b, theta1, theta2, y):
     Q = Discharge
     n = Manning roughness factor
     b = Channel width
-    theta1 = Right diagonal angle with the horizontal in degrees
-    theta2 = Left diagonal angle with the horizontal in degrees
+    theta1 = Right diagonal angle with the horizontal in radians
+    theta2 = Left diagonal angle with the horizontal in radians
     y = water depth
   """
   try:
@@ -216,8 +218,8 @@ def Nmanning(alpha, Q, So, b, theta1, theta2, y):
     Q = Discharge
     So = Channel slope
     b = Channel width
-    theta1 = Right diagonal angle with the horizontal in degrees
-    theta2 = Left diagonal angle with the horizontal in degrees
+    theta1 = Right diagonal angle with the horizontal in radians
+    theta2 = Left diagonal angle with the horizontal in radians
     y = water depth
   """
   try:
@@ -272,11 +274,12 @@ def thetaInC(r, y):
     y = water depth
   """
   if y == r:
-    return 90
+    return 180
   elif y < r:
-    return (180.0/math.pi)*math.acos((r-y)/r)
+    return math.degrees(2*math.acos((r-y)/r))
   elif y > r:
-    return (180.0/math.pi)*math.asin((y-r)/r)
+    return 360-math.degrees(2*math.acos((y-r)/r))
+      #return (180.0/math.pi)*math.asin((y-r)/r)
 
 def linearInterp(x1, y1, x2, y2, y):
   """
@@ -331,12 +334,12 @@ def interpAnewSection(xs, ys, ns, y):
       nsn = []
       sw = False
       for i in range(n-1):
-        if ys[i]>y and ys[i+1]<y:
+        if ys[i]>=y and ys[i+1]<=y:
           sw = True
           xi = linearInterp(xs[i], ys[i], xs[i+1], ys[i+1], y)
           xsn.append(xi)
           ysn.append(y)
-        elif ys[i+1]>y and ys[i]<y:
+        elif ys[i+1]>=y and ys[i]<=y:
           xi = linearInterp(xs[i], ys[i], xs[i+1], ys[i+1], y)
           xsn.append(xi)
           ysn.append(y)
@@ -464,11 +467,24 @@ def equiNmanning_EinsteinHorton(Ps, ns):
   except ValueError:
     print("Oops!  That was no valid number.  Try again...")
 
+def QI(xs, ys, vs):
+  """
+  Estimation of discharge for an irregular cross section 
+  Where:
+    xs = List of x coords
+    ys = List of y coords
+    vs = List of velocities en the area subsections
+  """
+
+  # Get the areas in the subsections
+  _,Al = irregCrossSecA(xs, ys)
+
+  return (sum(v*a for v,a in zip(vs,Al)))
 
 
 def QmanningI(alpha, So, ns, xs, ys):
   """
-  Estimation of discharge for an irregular cross section
+  Estimation of discharge for an irregular cross section from the Mannin equation
   Where:
     alpha = Unit convertion factor    
     ns = List of Manning roughness coefficients
@@ -495,4 +511,323 @@ def QmanningI(alpha, So, ns, xs, ys):
   except ValueError:
     print("Oops!  That was no valid number.  Try again...")
 
+def energyCoeff(xs, ys, vs):
+  """
+  Estimation of the correction coefficient for the kinematic energy
+  Where:
+    xs = List of x coords
+    ys = List of y coords
+    vs = List of velocities en the area subsections
+  """
 
+  try:
+    # Get the areas in the subsections
+    At,Al = irregCrossSecA(xs, ys)
+
+    # Compute the coeff.
+    num1 = 0
+    den = 0
+    for v,a in zip(vs,Al):
+        num1 += (v**3)*a
+        den += v*a
+    return(num1*(At**2)/(den**3)) 
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def momentCoeff(xs, ys, vs):
+  """
+  Estimation of the correction coefficient for the momentum
+  Where:
+    xs = List of x coords
+    ys = List of y coords
+    vs = List of velocities en the area subsections
+  """
+
+  try:
+    # Get the areas in the subsections
+    At,Al = irregCrossSecA(xs, ys)
+
+    # Compute the coeff.
+    num1 = 0
+    den = 0
+    for v,a in zip(vs,Al):
+        num1 += (v**2)*a
+        den += v*a
+    return(num1*At/(den**2)) 
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def slopeAngle(So):
+  """
+  Estimate the channel slope angle base on the slope
+  Where:
+    So = Channel slope (L/L)
+  """
+
+  try:
+    return(math.degrees(math.atan(So))) 
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def specificEnergy(y, thetaS, alpha, Q, g, A):
+  """
+  Estimate the speficic energy
+  Where:
+    y = Vertical water depth
+    thetaS = Slope angle channel
+    alpha = Energy coefficient
+    Q = Discharge
+    g = Gravity
+    A = Cross section area
+  """
+
+  try:
+    thetar = math.radians(thetaS)
+    E = y*(math.cos(thetar)) +alpha*(Q**2)/(2*g*(A**2)) 
+    return(E)
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def specificEnergyCurveI(yr, thetaS, alpha, Q, g, xs, ys):
+  """
+  Estimate the speficic energy curve for a irregular channel
+  Where:
+    yr = List of vertical water depths
+    thetaS = Slope angle channel
+    alpha = Energy coefficient
+    Q = Discharge
+    g = Gravity
+    xs = List of x coords
+    ys = List of y coords
+  """
+
+  try:
+    Es = list()
+    for y in yr:
+      xsn, ysn, dummy = interpAnewSection(xs, ys, xs, y)
+      A,_ = irregCrossSecA(xsn, ysn)
+      Es.append(specificEnergy(y, thetaS, alpha, Q, g, A))
+    return(Es)
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def specificEnergyCurve(yr, thetaS, alpha, Q, g, b, theta1, theta2):
+  """
+  Estimate the speficic energy curve for a prismatic channel
+  Where:
+    yr = List of vertical water depths
+    theta = Slope angle channel
+    alpha = Energy coefficient
+    Q = Discharge
+    g = Gravity
+    b = Channel width
+    theta1 = Right diagonal angle with the horizontal in radians
+    theta2 = Left diagonal angle with the horizontal in radians
+  """
+
+  try:
+    Es = list()
+    for y in yr:
+      A = area(b, theta1, theta2, y)
+      Es.append(specificEnergy(y, thetaS, alpha, Q, g, A))
+    return(Es)
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+
+def specificEnergyCurveC(yr, thetaS, alpha, Q, g, r):
+  """
+  Estimate the speficic energy curve for a circular channel
+  Where:
+    yr = List of vertical water depths
+    theta = Slope angle channel
+    alpha = Energy coefficient
+    Q = Discharge
+    g = Gravity
+    r = Radio
+  """
+
+  try:
+    Es = list()
+    for y in yr:
+      theta = thetaInC(r, y)
+      #print(y, theta)
+      A = areaC(theta, r)
+      Es.append(specificEnergy(y, thetaS, alpha, Q, g, A))
+    return(Es)
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def specificForce(beta, Q, g, A, z):
+  """
+  Estimate the speficic energy
+  Where:
+    beta = Momentum coefficient
+    Q = Discharge
+    g = Gravity
+    A = Cross section area 
+    z = vertical depth to the area centroid
+  """
+
+  try:
+    F = A*z + beta*(Q**2)/(g*A) 
+    return(F)
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def specificForceCurve(yr, thetaS, beta, Q, g, b, theta1, theta2):
+  """
+  Estimate the speficic force curve for a prismatic channel
+  Where:
+    yr = List of vertical water depths
+    theta = Slope angle channel
+    beta = Momentum coefficient
+    Q = Discharge
+    g = Gravity
+    b = Channel width
+    theta1 = Right diagonal angle with the horizontal in radians
+    theta2 = Left diagonal angle with the horizontal in radians
+  """
+
+  try:
+    Fs = list()
+    for y in yr:
+      A = area(b, theta1, theta2, y)
+      xs,ys = getXYcoordSec(b, theta1, theta2, y)
+      _,z = polygon_centroid(xs,ys)
+      Fs.append(specificForce(beta, Q, g, A, z))
+    return(Fs)
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+
+def specificForceCurveI(yr, thetaS, beta, Q, g, xs, ys):
+  """
+  Estimate the speficic force curve for a irregular channel
+  Where:
+    yr = List of vertical water depths
+    thetaS = Slope angle channel
+    beta = Momentum coefficient
+    Q = Discharge
+    g = Gravity
+    xs = List of x coords
+    ys = List of y coords
+  """
+
+  try:
+    Fs = list()
+    for y in yr:
+      xsn, ysn, dummy = interpAnewSection(xs, ys, xs, y)
+      A,_ = irregCrossSecA(xsn, ysn)
+      _,z = polygon_centroid(xsn,ysn)
+      Fs.append(specificForce(beta, Q, g, A, z))
+    return(Fs)
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def specificForceCurveC(yr, thetaS, beta, Q, g, r):
+  """
+  Estimate the speficic force curve for a circular channel
+  Where:
+    yr = List of vertical water depths
+    thetaS = Slope angle channel
+    beta = Energy momentum 
+    Q = Discharge
+    g = Gravity
+    r = Radio
+  """
+
+  try:
+    Fs = list()
+    for y in yr:
+      theta = thetaInC(r, y)
+      #print(y, theta)
+      A = areaC(theta, r)
+      z = cirseg_centroid(r,theta,y)
+      Fs.append(specificForce(beta, Q, g, A, z))
+    return(Fs)
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+
+def getXYcoordSec(b, theta1, theta2, y):
+  """
+  Set the x and y coordinates of a prismatic section
+  where:
+    b = Channel width
+    theta1 = Right diagonal angle with the horizontal in radians
+    theta2 = Left diagonal angle with the horizontal in radians
+    y = water depth
+  """
+  try:
+      
+    if theta1 == math.pi/2:
+        a1 = 0.0
+    elif theta1 < math.pi/2:
+        a1 = y/math.tan(theta1)
+
+    if theta2 == math.pi/2:
+        a2 = 0.0
+    elif theta2 < math.pi/2:
+        a2 = y/math.tan(theta2)
+
+    xs = list()
+    ys = list()
+    if b==0:
+      xs.append(0); ys.append(y)
+      xs.append(a1); ys.append(0)
+      xs.append(a1+a2); ys.append(y)
+    else:
+      xs.append(0); ys.append(y)
+      xs.append(a1); ys.append(0)
+      xs.append(a1+b); ys.append(0)
+      xs.append(a1+b+a2); ys.append(y)
+    return(xs,ys)
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def cirseg_centroid(r,theta,y):
+  """
+  Estimate the centroid y coordinate of a circular segment
+  where:
+    r: Circle radio
+    theta: Angle formed between y and r in degrees
+    y: height of the circular segment
+  """
+  try:
+    theta_r = math.radians(theta)
+    z = (4*r*((math.sin(theta_r/2.))**3.)/(3*(theta_r-math.sin(theta_r))))-(r-y)
+    #print(y,z)
+    return(z)
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def polygon_centroid(x,y):
+  """
+  Estimate the coord x and y of the centroid of a polygon 
+  Where:
+    xs: a list with x coord of the section
+    ys: a list with y coord of the section
+  """
+
+  try:
+ 
+    # Vertices should be a list of (x, y) tuples
+    x = np.array(x)
+    y = np.array(y)
+    
+    # Close the polygon by adding the first vertex to the end
+    x = np.append(x, x[0])
+    y = np.append(y, y[0])
+    
+    # Calculate the area
+    A = 0.5 * np.sum(x[:-1] * y[1:] - x[1:] * y[:-1])
+    
+    # Calculate centroid coordinates
+    Cx = (1 / (6 * A)) * np.sum((x[:-1] + x[1:]) * (x[:-1] * y[1:] - x[1:] * y[:-1]))
+    Cy = (1 / (6 * A)) * np.sum((y[:-1] + y[1:]) * (x[:-1] * y[1:] - x[1:] * y[:-1]))
+    
+    return Cx, Cy
+
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
