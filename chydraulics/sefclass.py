@@ -12,7 +12,7 @@ import matplotlib.cm as cm
 
 from . import clib
 
-class SpecificEnergy():
+class SpecificEnergyForce():
   """
   Class to estimate the normal depth in a open channel flow
   """

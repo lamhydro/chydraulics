@@ -166,9 +166,9 @@ class UniformFlow():
       print(c)
 
       if self._data['ST'] == 1:
-        fa = self._data['Q'] - clib.QmanningC(self._conf, self._data['So'], self._data['n'], self._a, self._data['r'])   
-        fb = self._data['Q'] - clib.QmanningC(self._conf, self._data['So'], self._data['n'], self._b, self._data['r'])   
-        fc = self._data['Q'] - clib.QmanningC(self._conf, self._data['So'], self._data['n'], c, self._data['r'])   
+        fa = self._data['Q'] - clib.QmanningC(self._conf, self._data['So'], self._data['n'], 2*self._a, self._data['r'])   
+        fb = self._data['Q'] - clib.QmanningC(self._conf, self._data['So'], self._data['n'], 2*self._b, self._data['r'])   
+        fc = self._data['Q'] - clib.QmanningC(self._conf, self._data['So'], self._data['n'], 2*c, self._data['r'])   
       elif self._data['ST'] == 2:
         fa = self._data['Q'] - clib.Qmanning(self._conf, self._data['So'], self._data['n'], self._data['b'], self._data['theta1'], self._data['theta2'], self._a)   
         fb = self._data['Q'] - clib.Qmanning(self._conf, self._data['So'], self._data['n'], self._data['b'], self._data['theta1'], self._data['theta2'], self._b)   
@@ -189,7 +189,7 @@ class UniformFlow():
       if c>0.0 and c<90.0:
         yn = self._data['r']*(1.0 - math.cos(math.radians(c)))
       if c>90.0 and c<180.0:
-        yn = self._data['r']*(1.0 + math.sin(math.radians(c)))
+        yn = self._data['r']*(1.0 + math.cos(math.radians(180-c)))
     elif self._data['ST'] == 2:
         yn = c
   
