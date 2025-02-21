@@ -304,7 +304,7 @@ class GVF():
     plt.plot(x, z, color='black', label="Bottom", lw=1.0)
     plt.plot(x, ynr, color='green', linestyle='--', label="Normal depth", lw=0.5)
     plt.plot(x, ycr, color='red', linestyle='-.', label="Critical depth", lw=0.5)
-    #plt.plot(x, Et, color='orange', linestyle='-.', label="Energy line", lw=0.5)
+    plt.plot(x, Et, color='orange', linestyle='-.', label="Energy line", lw=0.5)
     #plt.plot(self._Es, y_curve, color='black')
     #plt.plot(self._Ec, self._yc, '.', color='red', markersize=10)
    

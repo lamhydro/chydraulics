@@ -1559,8 +1559,7 @@ def gvfEquation(Co, So, alpha, Q, g, b, theta1, theta2, y, n, PT):
   try:
       Sf = Somanning(Co, Q, n, b, theta1, theta2, y)
       Fr = froudeNumber(So, alpha, Q, g, b, theta1, theta2, y)
-      print(Fr, y)
-      if abs(Fr-1) < 0.001:
+      if abs(Fr-1) < 0.0001:
       #if abs(Fr-1) < ERROR:
         #return(-0.1)
         dy_dx = 0.01
@@ -1602,9 +1601,9 @@ def standard_step(Co, Q, g, theta1, theta2, n, So, alpha, b, y1, x1, z1, dx, dz,
       def fy(Co, Q, g, theta1, theta2, n, So, alpha, b, y1, x1, z1, dx, dz, y2, PT):
           """
           """
+          #print('ELY',Co, Q, g, theta1, theta2, n, So, alpha, b, y1, x1, z1, dx, dz, y2, PT)
 
           x2 = x1 + dx
-          z2 = z1 + dz
 
           A1 = area(b, theta1, theta2, y1)
           H1 = specificEnergy(y1, slopeAngle(So), alpha, Q, g, A1) + z1
@@ -1614,8 +1613,10 @@ def standard_step(Co, Q, g, theta1, theta2, n, So, alpha, b, y1, x1, z1, dx, dz,
           Sf2 = Somanning(Co, Q, n, b, theta1, theta2, y2)
 
           if PT in ['M1','M2','S1','H2','A2']: # Control aguas abajo
+            z2 = z1 + dz
             return( y2 + (alpha*(Q**2))/(2*g*(A2**2)) - 0.5*Sf2*dx + z2 - H1 - 0.5*Sf1*dx ) 
           elif PT in ['M3','S2','S3','H3','A3']:# Control aguas arriba
+            z2 = z1 - dz
             return( y2 + (alpha*(Q**2))/(2*g*(A2**2)) + 0.5*Sf2*dx + z2 - H1 + 0.5*Sf1*dx ) 
 
 
@@ -1639,7 +1640,6 @@ def standard_step(Co, Q, g, theta1, theta2, n, So, alpha, b, y1, x1, z1, dx, dz,
           dP2 = dP(theta1, theta2)
           dR2 = (B2/P2) - (A2/(P2**2))*dP2
 
-
           if PT in ['M1','M2','S1','H2','A2']: # Control aguas abajo
             return( 1 - (alpha*(Q**2)*B2)/(g*(A2**3)) + dx*( ((Sf2*B2)/A2) + (2/3)*(Sf2/R2)*dR2 ) )
           elif PT in ['M3','S2','S3','H3','A3']:# Control aguas arriba
@@ -1649,19 +1649,22 @@ def standard_step(Co, Q, g, theta1, theta2, n, So, alpha, b, y1, x1, z1, dx, dz,
           """
           """
           fxy1 = gvfEquation(Co, So, alpha, Q, g, b, theta1, theta2, y1, n, PT)
+          #print('TOMAS', fxy1, y1 ,y1 + fxy1*dx )
           return( y1 + fxy1*dx )
+          #return( 3.2 )
 
 
       xs = []; ys = []; zs = []; As = []; Rs = []; Vs = []; Sfs = []; Es = []
       #L = xf-x1
       #y1 = 0.99*y1
       #while (x1 < L) and ( (abs(y1-yn)>dx) or (abs(y1-yc)>dx) ):
+      #jj = 0
       while 1:
         if (PT in ['M1', 'M2', 'S2', 'S3']) and (abs(y1-yn)<0.01): break
         if (PT in ['M3', 'S1', 'H3','A3']) and (abs(y1-yc)<0.01): break
         if (PT in ['H2','A2'] and x1>xf): break
 
-        print(x1, y1, z1)
+        #print('herere',x1, y1, z1)
         xs.append(x1)
         ys.append(y1)
         zs.append(z1)
@@ -1677,24 +1680,27 @@ def standard_step(Co, Q, g, theta1, theta2, n, So, alpha, b, y1, x1, z1, dx, dz,
         if PT in ['M1','M2','S1','A3']: z2 = z1+dz
         if PT in ['H2','H3']: z2 = z1
         y2a = y2i(Co, Q, g, theta1, theta2, n, So, alpha, b, y1, dx, PT)
-        #print('here',y2a)
+        #print('lasdlasdlasdla',Co, Q, g, theta1, theta2, n, So, alpha, b, y1, dx, PT, y2a)
         i = 0
         while 1: # For Newton-Raphson
           f = fy(Co, Q, g, theta1, theta2, n, So, alpha, b, y1, x1, z1, dx, dz, y2a, PT)
           df = dfy(Co, Q, g, theta1, theta2, n, So, alpha, b, dx, y2a, PT)
           y2 = y2a - (f/df)
-          print(y2,f, df)
+          #print('ALE',y2,f, df,z1,z2)
 
           if (abs(y2-y2a) <= ERROR) or i>NMAX : break
           #if (abs(y2-y2a) <= ERROR) or i>10: break
           y2a = y2
           i += 1
           
+        print('kkkkkkkkkkk', y2,dz, dx)
         #sys.exit()
         x1 = x2
         z1 = z2
         y1 = y2
-            
+        #if jj > 100000: break
+        #jj = jj + 1
+
       return(ys, xs, zs, As, Rs, Vs, Sfs, Es) 
 
       raise RuntimeError("Maximum number of iterations reached without convergence.")
